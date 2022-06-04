@@ -58,14 +58,41 @@ def check_login(username, password):
     password = encrypt_password(password)
     
     print(f"Authenticating {username} with {password}")
+    msg = ""
+    flag = False
 
-    query = f"SELECT username, encpswd FROM credentials where username = '{username}' and encpswd = '{password}'"
-    res = db.cursor().execute(query).fetchall()
+    # SQL query
+    # SELECT username, encpswd FROM credentials where username = 'username' or and encpswd = 'aaaa...aaaa'
+    # Injection query
+    # SELECT username, encpswd FROM credentials where username = 'something'; INSERT INTO credentials (username, encpswd) VALUES ('biden', '5f4dcc3b5aa765d61d8327deb882cf99'); SELECT username from credentials where '1' = '1' or and encpswd = 'aaaa...aaaa'
+    # Injection code
+    # something'; INSERT INTO credentials (username, encpswd) VALUES ('biden', '5f4dcc3b5aa765d61d8327deb882cf99'); SELECT username from credentials where '1' = '1
+    try:
+        query = f"SELECT username, encpswd FROM credentials where username = '{username}' and encpswd = '{password}';"
+        # res = db.cursor().executescript(query).fetchall()
+        # db.cursor().executemany(query, [])
+        res = db.cursor().execute(query).fetchall()
+        print(res)
+        if len(res) != 1:
+            msg = "用户名或密码错误，请重试。"
+        else:
+            flag = True    
+        
+    except sqlite3.OperationalError as OpErr:
+        print(f"Error SQL Operation: {OpErr}")
+        msg = "SQL 内部错误"
+        return False, msg
     
-    return len(res) == 1
+    except Exception as Err:
+        print(f"Error: {Err}")
+        msg = "其他错误"
+        return False, msg
+    
+    return flag, msg
 
 init_login([
-    ("aiden", "password")
+    ("admin", "@dm1n"),
+    ("aiden", "P@ssw0rd")
 ])
 
 # 启动flask
@@ -89,14 +116,14 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = escape(request.form['username'])
-        password = escape(request.form['password'])
-        login_res = check_login(username, password)
+        username = request.form['username']
+        password = request.form['password']
+        login_res, msg = check_login(username, password)
         
         if login_res:
             return redirect("/index", code=302)
         else:
-            return render_template('login.html', comment='用户名或密码错误，请重试。')
+            return render_template('login.html', comment=msg)
     else:
         return render_template('login.html', comment="登录后方可查看内容。")
 
