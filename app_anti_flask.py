@@ -24,6 +24,7 @@ def get_comments(search_query=None):
     get_all_query = 'SELECT comment FROM comments'
     for (comment,) in db.cursor().execute(get_all_query).fetchall():
         if search_query is None or search_query in comment:
+            print(f"Added { comment }")
             results.append(escape(comment))
     return results
 
@@ -36,8 +37,8 @@ def index():
         add_comment(request.form['comment'])
 
     search_query = request.args.get('q')
-    # search_query = escape(search_query)
-
+    search_query = escape(search_query) if search_query is not None else None
+    
     comments = get_comments(search_query)
 
     return render_template('index.html', comments=comments, search_query=search_query)

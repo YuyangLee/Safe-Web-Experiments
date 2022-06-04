@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, escape
+from flask import Flask, render_template, request
 import sqlite3
 
 # 连接数据库
