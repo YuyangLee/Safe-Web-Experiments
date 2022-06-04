@@ -61,19 +61,6 @@ def check_login(username, password):
     msg = ""
     flag = False
 
-    # SELECT username, encpswd FROM credentials where username = 'username' or and encpswd = 'aaaa...aaaa'
-    # Injection query A - Won't work in one-line mode.
-    # SELECT username, encpswd FROM credentials where username = 'something'; INSERT INTO credentials (username, encpswd) VALUES ('biden', '5f4dcc3b5aa765d61d8327deb882cf99'); SELECT username from credentials where '1' = '1' or and encpswd = 'aaaa...aaaa'
-    # Injection code A
-    # something'; INSERT INTO credentials (username, encpswd) VALUES ('biden', '5f4dcc3b5aa765d61d8327deb882cf99'); SELECT username from credentials where '1' = '1
-    # Injection query B
-    # SELECT username, encpswd FROM credentials where username = 'xxx' #' and encpswd = 'aaaa...aaaa'
-    # Injection code B
-    # xxx' --+
-    # Injection query C
-    # SELECT username, encpswd FROM credentials where username = 'aiden' union select username, encpswd FROM credentials where username = 'xxx' and encpswd = 'aaaa...aaaa'
-    # Injection code C
-    # aiden' union select username, encpswd FROM credentials where username = 'xxx
     try:
         query = f"SELECT username, encpswd FROM credentials where username = '{username}' and encpswd = '{password}';"
         # res = db.cursor().executescript(query).fetchall()
@@ -87,7 +74,9 @@ def check_login(username, password):
         
     except sqlite3.OperationalError as OpErr:
         print(f"Error SQL Operation: {OpErr}")
-        msg = "SQL 内部错误"
+        # Fix: 避免显示 SQL 内部错误信息
+        msg = "用户名或密码错误，请重试。"
+        # msg = "SQL 内部错误"
         return False, msg
     
     except Exception as Err:
@@ -123,8 +112,9 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        # Fix: 对请求数据进行检查并 escape
+        username = escape(request.form['username'])
+        password = escape(request.form['password'])
         login_res, msg = check_login(username, password)
         
         if login_res:
