@@ -1,5 +1,5 @@
 import os
-from flask import Flask, redirect, render_template, request, escape
+from flask import Flask, make_response, redirect, render_template, request, escape
 import sqlite3
 import hashlib
 
@@ -18,7 +18,7 @@ def connect_cre_db():
     db = sqlite3.connect('data.db')
     db.cursor().execute('CREATE TABLE IF NOT EXISTS credentials '
                         '(id INTEGER PRIMARY KEY, '
-                        'username TEXT, encpswd TEXT)')
+                        'username TEXT, encpswd TEXT, secret TEXT)')
     db.commit()
     return db
 
@@ -48,9 +48,11 @@ def init_login(credentials):
     for u, p in credentials:
         MD5.update(p.encode('utf-8'))
         p = str.lower(MD5.hexdigest())
-        print(f"Adding {u} with {p}")
-        insert_query = 'INSERT INTO credentials (username, encpswd) VALUES (?, ?)'
-        db.cursor().execute(insert_query, (u, p))
+        MD5.update(p.encode('utf-8'))
+        s = str.lower(MD5.hexdigest())
+        # print(f"Adding {u} with endpswd {p} and secret {s}")
+        insert_query = 'INSERT INTO credentials (username, encpswd, secret) VALUES (?, ?, ?)'
+        db.cursor().execute(insert_query, (u, p, s))
         db.commit()
 
 def check_login(username, password):
@@ -62,21 +64,18 @@ def check_login(username, password):
     flag = False
 
     try:
-        query = f"SELECT username, encpswd FROM credentials where username = '{username}' and encpswd = '{password}';"
-        # res = db.cursor().executescript(query).fetchall()
-        # db.cursor().executemany(query, [])
+        query = f"SELECT username, encpswd, secret FROM credentials where username = '{username}' and encpswd = '{password}';"
         res = db.cursor().execute(query).fetchall()
         print(res)
         if len(res) != 1:
             msg = "用户名或密码错误，请重试。"
         else:
             flag = True    
+            msg = res[0][-1]
         
     except sqlite3.OperationalError as OpErr:
         print(f"Error SQL Operation: {OpErr}")
-        # Fix: 避免显示 SQL 内部错误信息
-        msg = "用户名或密码错误，请重试。"
-        # msg = "SQL 内部错误"
+        msg = "SQL 内部错误"
         return False, msg
     
     except Exception as Err:
@@ -112,13 +111,18 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        # username = request.form['username']
+        # password = request.form['password']
         # Fix: 对请求数据进行检查并 escape
         username = escape(request.form['username'])
         password = escape(request.form['password'])
         login_res, msg = check_login(username, password)
         
         if login_res:
-            return redirect("/index", code=302)
+            print(msg)
+            resp = make_response(render_template("index.html"))
+            resp.set_cookie('userSecret', bytes(msg, 'utf-8'))
+            return resp
         else:
             return render_template('login.html', comment=msg)
     else:
