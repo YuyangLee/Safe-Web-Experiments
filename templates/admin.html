@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+{% autoescape false %}
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>管理</title>
+    <script type="text/javascript" src="/static/js/hex_md5.js"></script>
+    <script>
+        function encPswd()
+        {
+            var selectionInput = document.getElementById("selectionInput");
+            selectionInput.value = escape(selectionInput.value); 
+
+            return true;
+        }
+    </script>
+  </head>
+
+  <body>
+
+    <!-- Header -->
+    <header>
+      <h1>Web安全实验 - 管理</h1>
+    </header>
+
+    <!-- Search form -->
+    <form action="/admin/rm" method="POST" onsubmit="return encSelection()">
+      <input type="text" name="rm_id" id="selectionInput" placeholder="评论数据库 id" autocomplete="off" />
+      <input type="submit" value="删除" />
+    </form>
+
+  </body>
+</html>
+{% endautoescape %}
