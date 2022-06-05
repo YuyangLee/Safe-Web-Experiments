@@ -75,7 +75,9 @@ def check_login(username, password):
         
     except sqlite3.OperationalError as OpErr:
         print(f"Error SQL Operation: {OpErr}")
-        msg = "SQL 内部错误"
+        # msg = "SQL 内部错误"
+        # Fix: 避免显示 SQL 内部错误信息
+        msg = "用户名或密码错误，请重试。"
         return False, msg
     
     except Exception as Err:
