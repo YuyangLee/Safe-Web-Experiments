@@ -5,15 +5,15 @@
     <meta charset="utf-8" />
     <title>Web安全实验</title>
     <script>
-      function searchFormEsc(inputIds) {
+      function searchFormEsc() {
         searchInput = document.getElementById("searchInput");
-        searchInput.value = escape(searchInput.value);
+        searchInput.value = encodeURI(searchInput.value);
         return true;
       }
 
-      function commentFormEsc(inputIds) {
+      function commentFormEsc() {
         commentInput = document.getElementById("commentInput");
-        commentInput.value = escape(commentInput.value);
+        commentInput.value = encodeURI(commentInput.value);
         return true;
       }
     </script>
@@ -28,13 +28,7 @@
 
     <!-- Search form -->
     <form method="GET" id="searchForm" onsubmit="return searchFormEsc()">
-      <input
-        type="text"
-        name="q"
-        id="searchInput"
-        placeholder="搜索内容"
-        autocomplete="off"
-      />
+      <input type="text" name="q" id="searchInput" placeholder="搜索内容" autocomplete="off" />
       <input type="submit" value="提交" />
     </form>
 
